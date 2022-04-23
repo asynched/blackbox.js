@@ -1,6 +1,6 @@
 {
   "name": "blackbox.js",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "main": "lib/index.js",
   "description": "Blackbox.js is a library for handling state inside your React application. 📦",
   "license": "MIT",
@@ -13,7 +13,9 @@
     "url": "git+github.com:asynched/blackbox.js.git"
   },
   "scripts": {
-    "build": "rm -rf lib && tsc"
+    "build": "rm -rf lib && tsc",
+    "test": "jest --coverage",
+    "test:watch": "jest --watch"
   },
   "keywords": [
     "React",
@@ -21,7 +23,10 @@
     "Stores"
   ],
   "devDependencies": {
+    "@types/jest": "^27.4.1",
     "@types/react": "^17.0.39",
+    "jest": "^27.5.1",
+    "ts-jest": "^27.1.4",
     "typescript": "^4.5.5"
   },
   "dependencies": {
