@@ -14,6 +14,9 @@ It's designed specifically for React applications, so you don't have to worry ab
 4. [Learn](#learn)
    1. [The gist](#the-gist)
    2. [React](#react-⚛️)
+5. [Examples](#examples-📔)
+6. [License](#license-💼)
+7. [Author](#author)
 
 ## Installation
 
