@@ -1,136 +1,148 @@
 # Blackbox.js
 
-A state management library for React. 📦
+Blackbox is a predictable, boilerplate free state management library for React. 📦
 
-## How to install
+It's designed specifically for React applications, so you don't have to worry about installing other third party packages.
 
-Install it with NPM using
+> And it's tiny! 🤏
+
+## Index
+
+1. [Blackbox](#blackboxjs)
+2. [Index](#index)
+3. [Installation](#installation)
+4. [Learn](#learn)
+   1. [The gist](#the-gist)
+   2. [React](#react-⚛️)
+
+## Installation
+
+Assuming your using _npm_ as your package manager, install it typing the command below in your terminal:
 
 ```sh
-$ npm i --save blackbox.js
+$ npm i blackbox.js
 ```
 
-## Usage
+## Learn 🤓
 
-Blackbox aims to deal with state inside React as easily as possible, without having to deal with boiler plate code like reducers, switch statements or providers for your state. You're encouraged to deal with your state as easily as possible.
+Blackbox is a library designed for you to deal with globally shared state as easily as possible, without introducing any boiler plate code like reducers, switch statements or providers. With it, you're encouraged to do things as simple as possible.
 
-You can start declaring your store (or blackbox) with the `createBox` method. In the example below, you can see an example of a store with a person object.
+Similar to other flux-like libraries, it's architecture is based on the _single source of truth_ principle, where the state is a single global instance in your app, making it easier to reason about where the state and actions are coming from.
 
-```ts
+### The gist 🧠
+
+As said previously, blackbox is designed to give you a simple and boilerplate free API for dealing with your state. All you have to do is to create a globally available _box_ object to share between your components.
+
+The example below shows the usage of it with a simple counter app.
+
+```typescript
 import createBox from 'blackbox.js'
 
-const person = {
-  name: 'Foo',
+// Creates a reactive box object that'll
+// update and trigger any subscribers.
+const counterBox = createBox(0)
+
+/**
+ * This is an action, an action is the preferred way to
+ * interact with your state.
+ *
+ * We define them as functions that when triggered,
+ * updated the internal state of a box.
+ *
+ * In this case, then the function "increment" is called we
+ * increment the counter by the parameter "incrementBy".
+ *
+ * Declaring well defined actions will make your life easier
+ * in the long run, since everything will be mapped to a
+ * function. 😸
+ *
+ */
+function increment(incrementBy = 1) {
+  counterBox.set((counter) => counter + incrementBy)
 }
 
-const personBox = createBox(person)
-```
+/**
+ * Since we've defined an action to increment the counter previously, the
+ * "decrement" can call the "increment" with a negative value.
+ *
+ * In this function you can see that actions can call other actions or either
+ * call themselves!
+ */
+function decrement() {
+  increment(-1)
+}
 
-> This will create a reactive state box that can be listened. 👂
+counterBox.subscribe(console.log) // This will log any changes in the internal box state for us.
 
-### Foundations
-
-The box object is based on the observer design pattern, which allows any function to subscribe to it's internal state, allowing you to use it outside React, for example.
-
-You can use this with vanilla js (although not recommended) as show below:
-
-```ts
-import createBox from 'blackbox.js'
-
-const personBox = createBox({
-  name: 'foo',
-})
-
-personBox.subscribe((state) => {
-  const p = document.querySelector('p')
-
-  p.innerText = `Your name is: ${state.name}`
-})
-
-const button = document.querySelector('button')
-
-button.addEventListener('click', () =>
-  personBox.set((state) => {
-    state.name = 'Bar'
-    return state
-  })
-)
+/**
+ * As seen below, both calls are independent of the component
+ * context and don't need a hook to be triggered.
+ *
+ * We'll see how it's used inside a component in the section below.
+ */
+increment() // Increments the counter
+decrement() // Decrements the counter
 ```
 
 ### React ⚛️
 
-Although it can be used outside React, using the library is where the main focus of the library is: Allowing for declarative and simple state management without boiler plate.
-
-Let's start with an example of a simple person object that must be reactive
+Building on the previous example, blackbox provides you with hooks you can use to flatten a _box_ object to it's original state and make it reactive. We'll build a counter app with the previous actions to show you how easy it is.
 
 ```tsx
 import React from 'react'
 import createBox, { useBox } from 'blackbox.js'
 
-const personBox = createBox({
-  name: 'Foo',
-})
+// As shown in the previous example, you can
+// create a box from any value. We are using
+// zero as the initial state for the box.
+const counterBox = useBox(0)
 
-function App() {
-  const box = useBox(personBox)
+/**
+ * Our user-defined action to increment the
+ * counter by a value (which defaults to one).
+ */
+function increment(incrementBy = 1) {
+  counterBox.set((counter) => counter + incrementBy)
+}
+
+/**
+ * Another action to decrement the counter by one.
+ */
+function decrement() {
+  increment(-1)
+}
+
+/**
+ * In here, we're using the "useBox" hook to flatten the
+ * box object to it's original value (zero).
+ *
+ * This hook makes the counter reactive to triggered actions
+ * and deals automatically with the subscription management
+ * and cleanup.
+ */
+export default function App() {
+  const counter = useBox(counterBox) // This will flatten the box to the zero value.
 
   return (
     <div>
-      <h1>Hello, {box.name}!</h1>
+      <h1>Counter is: {counter}</h1>
+      <div>
+        <button onClick={() => increment()}>Increment</button>
+        <button onClick={() => decrement()}>Decrement</button>
+      </div>
     </div>
   )
 }
 ```
 
-As the above code shows, all you have to do is declare a box object (`personBox` in the example) and provide it to the `useBox` hook.
+## Examples 📔
 
-**But what if I wanted to make it reactive?**
+- [Expense tracker with Blackbox.js and Tailwind 🍃](https://github.com/asynched/blackbox-expense-tracker)
+- [Realtime websocket chat app with Blackbox.js 📬](https://github.com/asynched/websocket-chat-app)
 
-Using the above code as an example, it is encouraged to declare your `actions` or `mutations` for the box object when it's declared, allowing only a set of actions to be dispatched (although you can use the `.set` method anywhere). A good rule of thumb is that "flexibility comes with a cost".
+## License 💼
 
-In the example below we show how to use it both ways.
-
-```tsx
-import React from 'react'
-import createBox, { useBox } from 'blackbox.js'
-
-const personBox = createBox({
-  name: 'Foo',
-})
-
-const personMutations = {
-  setName(name: string) {
-    personBox.set((state) => {
-      state.name = name
-      return state
-    })
-  },
-}
-
-function App() {
-  const box = useBox(personBox)
-
-  const handleClick = () => {
-    // Set using the set method inside
-    // the box object (discouraged).
-    if (false) {
-      return personBox.set((state) => {
-        state.name = 'Bar'
-      })
-    }
-
-    // Easier to reason about (encouraged).
-    personMutations.setName('Bar')
-  }
-
-  return (
-    <div>
-      <h1>Hello, {box.name}!</h1>
-      <button onClick={handleClick}>Change name</button>
-    </div>
-  )
-}
-```
+[MIT](https://github.com/asynched/blackbox.js/blob/master/LICENSE)
 
 ## Author
 

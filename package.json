@@ -20,7 +20,8 @@
   "keywords": [
     "React",
     "State management",
-    "Stores"
+    "Stores",
+    "Reactivity"
   ],
   "devDependencies": {
     "@types/jest": "^27.4.1",
