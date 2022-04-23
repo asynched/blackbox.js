@@ -1,18 +1,21 @@
-import React from 'react';
-declare namespace Blackbox {
+/// <reference types="react" />
+export declare namespace Blackbox {
+    type GenericBlackboxObjectType = {
+        [key: string | symbol | number]: any;
+    };
     /**
      * Box subscriber function.
      */
-    type BoxSubscriberType<A> = (value: A) => void;
+    type BoxSubscriberCallbackType<A> = (value: A) => void;
     /**
      * Mutation function to update the internal state
      * of the box.
      */
-    type BoxMutationType<A> = (state: A) => A;
+    type BoxMutationCallbackType<A> = (state: A) => A;
     /**
      * Function to unsubscribe from the box state changes.
      */
-    type BoxUnsubscribeType = () => void;
+    type BoxUnsubscribeCallbackType = () => void;
     /**
      * Reactive blackbox object
      */
@@ -35,7 +38,18 @@ declare namespace Blackbox {
          *
          * @param handler A mutation handler for setting the state of the box.
          */
-        set: (handler: BoxMutationType<A>) => void;
+        set: (handler: BoxMutationCallbackType<A>) => void;
+        /**
+         * # Update
+         *
+         * Updates the internal state of the box.
+         *
+         * Sets the internal state of the box with the matching value
+         * passed to it.
+         *
+         * @param newState New internal state value.
+         */
+        update: (state: A) => void;
         /**
          * # Subscribe
          *
@@ -48,7 +62,19 @@ declare namespace Blackbox {
          * @param subscriber A subscriber function for listening to the state changes of
          * the current box.
          */
-        subscribe: (subscriber: BoxSubscriberType<A>) => BoxUnsubscribeType;
+        subscribe: (subscriber: BoxSubscriberCallbackType<A>) => BoxUnsubscribeCallbackType;
+    };
+    /**
+     * Generic observable box object.
+     */
+    type ObservableBoxType<A> = Pick<BoxType<A>, 'get' | 'subscribe'>;
+    /**
+     * Function to register a form field to the mutations
+     * of the internal box.
+     */
+    type RegisterFunctionType<A> = (key: keyof A) => {
+        value: A[keyof A];
+        onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
     };
 }
 /**
@@ -61,15 +87,20 @@ declare namespace Blackbox {
  * @param state The initial state of the box.
  * @returns A box object that can be subscribed to and mutated.
  */
-export default function createBox<A extends {}>(state: A): Blackbox.BoxType<A>;
+export default function createBox<A>(state: A): Blackbox.BoxType<A>;
 /**
- * Function to register a form field to the mutations
- * of the internal box.
+ * # derive
+ *
+ * Helper function to use a slice of a given internal box state, it returns a new box
+ * that is a proxy to the internal state of the original one.
+ *
+ * A derived box cannot be mutated.
+ *
+ * @param selectorFunction Function to select a slice of the internal state of a given box.
+ * @param box Box to get the derived state from.
+ * @returns A new observable box that can be subscribed to.
  */
-declare type RegisterFunctionType<A> = (key: keyof A) => {
-    value: A[keyof A];
-    onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-};
+export declare function derive<A, B>(box: Blackbox.BoxType<A>, selectorFunction: (state: A) => B): Blackbox.ObservableBoxType<B>;
 /**
  * # Use box
  *
@@ -80,7 +111,7 @@ declare type RegisterFunctionType<A> = (key: keyof A) => {
  * @param box Box object to get the state from.
  * @returns The state of the original box passed to it.
  */
-export declare function useBox<A>(box: Blackbox.BoxType<A>): A;
+export declare function useBox<A>(box: Blackbox.ObservableBoxType<A>): A;
 /**
  * # Use box form
  *
@@ -102,5 +133,21 @@ export declare function useBox<A>(box: Blackbox.BoxType<A>): A;
  * @returns A tuple containing the form state and a function to
  * register for changes in the UI.
  */
-export declare function useBoxForm<A>(box: Blackbox.BoxType<A>): [A, RegisterFunctionType<A>];
-export {};
+export declare function useBoxForm<A extends Blackbox.GenericBlackboxObjectType>(box: Blackbox.BoxType<A>): [A, Blackbox.RegisterFunctionType<A>];
+/**
+ * # Use derived box
+ *
+ * Helper hook to get a slice of the box inner state.
+ *
+ * ## Example
+ *
+ * ```typescript
+ * const sourceBox = createBox({ names: ['foo', 'bar', 'baz'] })
+ * const namesBox = useDerivedBox((state) => state.names, sourceBox)
+ * ```
+ *
+ * @param selectorFunction Selector function to get the derived state of the box.
+ * @param box Source box object to get the derived state from
+ * @returns The derived state of the box.
+ */
+export declare function useDerivedBox<A, B>(box: Blackbox.ObservableBoxType<A>, selectorFunction: (state: A) => B): B;
