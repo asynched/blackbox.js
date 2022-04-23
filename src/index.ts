@@ -197,12 +197,12 @@ export default function createBox<A>(state: A): Blackbox.BoxType<A> {
     subscribers.forEach((subscriber) => subscriber(internalState))
   }
 
-  return {
+  return Object.freeze({
     subscribe,
     get,
     set,
     update,
-  }
+  })
 }
 
 /**
@@ -255,10 +255,10 @@ export function derive<A, B>(
     }
   }
 
-  return {
+  return Object.freeze({
     get,
     subscribe,
-  }
+  })
 }
 
 /**
