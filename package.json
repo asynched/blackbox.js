@@ -1,6 +1,6 @@
 {
   "name": "blackbox.js",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "main": "lib/index.js",
   "description": "Blackbox.js is a library for handling state inside your React application. 📦",
   "license": "MIT",
