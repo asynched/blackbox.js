@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react'
 
 type GenericBox = Record<string, unknown>
-type Subscriber<T> = (value: T) => void
+type Subscriber<Type> = (value: Type) => void
 
-const clone = <T>(value: T): T => {
+const clone = <Type>(value: Type): Type => {
   return JSON.parse(JSON.stringify(value))
 }
 
-type BlackBox<T extends GenericBox> = {
+type BlackBox<State extends GenericBox> = {
   /**
    * Helper method to get the inner value of a box.
    *
@@ -17,7 +17,7 @@ type BlackBox<T extends GenericBox> = {
    *
    * @returns The inner value of the box.
    */
-  get: () => T
+  get: () => State
   /**
    * Helper method to set the inner value of a box.
    *
@@ -27,7 +27,7 @@ type BlackBox<T extends GenericBox> = {
    *
    * @param value The new property to be updated.
    */
-  set: (value: Partial<T>) => void
+  set: (value: Partial<State>) => void
   /**
    * Helper method to subscribe to changes in a box.
    *
@@ -35,12 +35,12 @@ type BlackBox<T extends GenericBox> = {
    * const box = createBox({ message: 'Hello, world!' })
    * box.subscribe((value) => console.log(value))
    *
-   * box.set({ message: 'Ayy!' }) // Will log the value to the console.
+   * box.set({ message: 'Hello!' }) // Will log the value to the console.
    *
    * @param subscriber The function to be called when the box is updated.
    * @returns A function to unsubscribe from the box.
    */
-  subscribe: (subscriber: Subscriber<T>) => () => void
+  subscribe: (subscriber: Subscriber<State>) => () => void
   /**
    * Helper method to update the inner value of a box.
    *
@@ -48,12 +48,12 @@ type BlackBox<T extends GenericBox> = {
    * const box = createBox({ message: 'Hello, world!' })
    *
    * box.update((state) => {
-   *   state.message = 'Ayy!'
+   *   state.message = 'Hello!'
    * })
    *
    * @param updater The function that will update the inner value of the box.
    */
-  update: (updater: (value: T) => void) => void
+  update: (updater: (value: State) => void) => void
   /**
    * Sets the inner state to be the initial value provided.
    *
@@ -71,10 +71,12 @@ type BlackBox<T extends GenericBox> = {
  * @param value The initial value of the box.
  * @returns A black box that can be used to store and update state.
  */
-export function createBox<T extends GenericBox>(value: T): BlackBox<T> {
+export function createBox<State extends GenericBox>(
+  value: State
+): BlackBox<State> {
   let inner = value
   const zero = clone(value)
-  const subscribers: Array<Subscriber<T>> = []
+  const subscribers: Array<Subscriber<State>> = []
 
   const reset = () => {
     inner = zero
@@ -84,12 +86,12 @@ export function createBox<T extends GenericBox>(value: T): BlackBox<T> {
     return inner
   }
 
-  const set = (value: Partial<T>) => {
+  const set = (value: Partial<State>) => {
     inner = Object.assign({}, inner, value)
     subscribers.forEach((subscriber) => subscriber(inner))
   }
 
-  const update = (updater: (value: T) => void) => {
+  const update = (updater: (value: State) => void) => {
     const clone = Object.assign({}, inner)
 
     updater(clone)
@@ -98,7 +100,7 @@ export function createBox<T extends GenericBox>(value: T): BlackBox<T> {
     subscribers.forEach((subscriber) => subscriber(inner))
   }
 
-  const subscribe = (subscriber: Subscriber<T>) => {
+  const subscribe = (subscriber: Subscriber<State>) => {
     subscribers.push(subscriber)
 
     return () => {
@@ -107,13 +109,13 @@ export function createBox<T extends GenericBox>(value: T): BlackBox<T> {
     }
   }
 
-  return {
+  return Object.freeze({
     get,
     set,
     update,
     subscribe,
     reset,
-  }
+  })
 }
 
 /**
@@ -124,7 +126,7 @@ export function createBox<T extends GenericBox>(value: T): BlackBox<T> {
  * @param box Box to be used in the component.
  * @returns The inner value of the box.
  */
-export function useBox<T extends GenericBox>(box: BlackBox<T>): T {
+export function useBox<State extends GenericBox>(box: BlackBox<State>): State {
   const [state, setState] = useState(box.get())
 
   useEffect(() => {
